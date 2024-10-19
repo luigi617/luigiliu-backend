@@ -1,9 +1,0 @@
-# PostgreSQL
-# ------------------------------------------------------------------------------
-POSTGRES_HOST=postgres
-POSTGRES_PORT=5432
-POSTGRES_NAME=luigi_database
-POSTGRES_DB=luigi_database
-POSTGRES_USER=luigi
-POSTGRES_PASSWORD=*Nn-fg6_cxH$ua23(Wq.v]pS=C7,M~
-DATABASE=postgres
