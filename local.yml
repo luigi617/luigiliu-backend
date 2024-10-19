@@ -1,0 +1,41 @@
+version: "3.3"
+
+services:
+  django:
+    build:
+      context: .
+      dockerfile: ./compose/local/Dockerfile
+    command: python3 manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.postgres
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres
+    restart: always
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data
+      - local_postgres_data_backups:/backups
+    ports: 
+      - "5432:5432"
+    env_file:
+      - ./.envs/.local/.postgres
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6378"
+    volumes:
+      - redis_data:/redis/data
+
+volumes: 
+  local_postgres_data: {}
+  local_postgres_data_backups: {}
+
+  redis_data: {}

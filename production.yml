@@ -1,0 +1,79 @@
+version: "3.3"
+
+services:
+  django:
+    build:
+      context: .
+      dockerfile: ./compose/production/Dockerfile
+    command: /start.sh
+    volumes:
+      - .:/code
+      - static_volume:/code/data/staticfiles
+      - media_volume:/code/data/media
+    expose:
+      - 8000
+    env_file:
+      - ./.envs/.prod/.django
+      - ./.envs/.prod/.postgres
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_backups:/backups
+    ports: 
+      - "5432:5432"
+    env_file:
+      - ./.envs/.prod/.postgres
+  
+  nginx:
+    build: ./nginx
+    restart: always
+
+    volumes:
+      - static_volume:/code/data/static
+      - media_volume:/code/data/media
+
+      - ./nginx/:/code/etc/nginx/conf.d/
+      - certbot-certs:/etc/letsencrypt
+      - certbot-web:/code/certbot/www
+      - ./certbot/conf:/code/certbot/conf
+    ports:
+      - 80:80
+      - 443:443
+    env_file:
+      - ./.envs/.prod/.nginx
+    depends_on:
+      - django
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/redis/data
+
+
+  certbot:
+    build: ./certbot
+    volumes:
+      - certbot-certs:/etc/letsencrypt/
+      - certbot-web:/code/certbot/www
+      
+    env_file:
+      - ./.envs/.prod/.certbot
+
+    depends_on:
+      - nginx
+
+volumes: 
+  certbot-web: {}
+  certbot-certs: {}
+
+  postgres_data: {}
+  postgres_data_backups: {}
+  static_volume: {}
+  media_volume: {}
+  redis_data: {}
