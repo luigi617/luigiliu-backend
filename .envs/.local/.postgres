@@ -1,0 +1,9 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_NAME=luigi_backend_database
+POSTGRES_DB=luigi_backend_database
+POSTGRES_USER=luigi_local_user
+POSTGRES_PASSWORD=luigi_local_password
+DATABASE=postgres
