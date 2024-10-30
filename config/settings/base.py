@@ -27,12 +27,8 @@ DJANGO_APPS = [
 ]
 
 LOCAL_APPS = [
-    "apps.home.apps.HomeConfig",
     "apps.core.apps.CoreConfig",
     "apps.user.apps.UserConfig",
-    "apps.article.apps.ArticleConfig",
-    "apps.treasure_hunt.apps.TreasureHuntConfig",
-    "apps.map.apps.MapConfig",
 ]
 THIRD_PARTY_APPS = [
     "phonenumber_field",
