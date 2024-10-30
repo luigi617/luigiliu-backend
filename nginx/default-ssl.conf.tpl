@@ -4,7 +4,7 @@ upstream django {
 }
 
 upstream react_app {
-    server react_build:80;
+    server react:80;
 }
 
 # HTTP Server Block: Handles ACME challenges and redirects HTTP to HTTPS
