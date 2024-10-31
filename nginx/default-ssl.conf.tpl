@@ -3,7 +3,7 @@ upstream django {
     server django:8000;
 }
 
-upstream react_app {
+upstream react {
     server react:80;
 }
 
@@ -72,7 +72,7 @@ server {
 
     # Serve React frontend
     location / {
-        proxy_pass http://react_app:80/;
+        proxy_pass http://react:80/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
