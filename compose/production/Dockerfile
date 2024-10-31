@@ -1,38 +1,35 @@
 # syntax=docker/dockerfile:1
-# pull official base image
-FROM python:3.9
-# set environment variables
+FROM python:3.9-slim
+
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-# set work directory
+
+# Set work directory
 WORKDIR /code
 
-# install psycopg2 dependencies
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
 
-
-
-RUN apt-get update \
-  # dependencies for building Python packages
-  && apt-get install -y build-essential \
-  # psycopg2 dependencies
-  && apt-get install -y libpq-dev \
-  && apt-get install -y poppler-utils
-
-# install dependencies
-RUN pip install --upgrade pip
+# Upgrade pip and install Python dependencies
 COPY requirements.txt /code/
+RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# copy entrypoint.sh
+# Copy entrypoint scripts
 COPY ./compose/production/entrypoint.sh /entrypoint.sh
 RUN sed -i "s/\r$//g" /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# copy start
 COPY ./compose/production/start.sh /start.sh
 RUN sed -i "s/\r$//g" /start.sh
 RUN chmod +x /start.sh
 
+# Copy the Django project
 COPY . /code/
 
 ENTRYPOINT ["/entrypoint.sh"]
