@@ -1,7 +1,11 @@
 from apps.user.urls import users_urlpatterns
+from apps.tictactoe.urls import tictactoe_urlpatterns
+from apps.core.urls import core_urlpatterns
 from rest_framework.urlpatterns import format_suffix_patterns
 
 
 urlpatterns = format_suffix_patterns(
-    users_urlpatterns
+    core_urlpatterns + 
+    users_urlpatterns +
+    tictactoe_urlpatterns
 )

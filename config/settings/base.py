@@ -29,21 +29,23 @@ DJANGO_APPS = [
 LOCAL_APPS = [
     "apps.core.apps.CoreConfig",
     "apps.user.apps.UserConfig",
+    "apps.tictactoe.apps.TictactoeConfig",
 ]
 THIRD_PARTY_APPS = [
     "phonenumber_field",
     "rest_framework",
     "rest_framework_simplejwt",
     "imagekit",
+    "corsheaders",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -186,5 +188,10 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
 
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", 'https')
+
+CORS_ALLOWED_ORIGINS = [
+    'https://luigiliu.com',
+    'http://localhost:5173',
+]
 
 CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS").split(" ")
