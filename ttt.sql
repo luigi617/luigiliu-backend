@@ -17,52 +17,6 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
-
---
--- Name: tictactoe_qvalue; Type: TABLE; Schema: public; Owner: luigi_local_user
---
-
-CREATE TABLE public.tictactoe_qvalue (
-    id bigint NOT NULL,
-    state character varying(100) NOT NULL,
-    action character varying(20) NOT NULL,
-    q_value double precision NOT NULL
-);
-
-
-ALTER TABLE public.tictactoe_qvalue OWNER TO luigi_local_user;
-
---
--- Name: tictactoe_qvalue_id_seq; Type: SEQUENCE; Schema: public; Owner: luigi_local_user
---
-
-CREATE SEQUENCE public.tictactoe_qvalue_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.tictactoe_qvalue_id_seq OWNER TO luigi_local_user;
-
---
--- Name: tictactoe_qvalue_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: luigi_local_user
---
-
-ALTER SEQUENCE public.tictactoe_qvalue_id_seq OWNED BY public.tictactoe_qvalue.id;
-
-
---
--- Name: tictactoe_qvalue id; Type: DEFAULT; Schema: public; Owner: luigi_local_user
---
-
-ALTER TABLE ONLY public.tictactoe_qvalue ALTER COLUMN id SET DEFAULT nextval('public.tictactoe_qvalue_id_seq'::regclass);
-
-
 --
 -- Data for Name: tictactoe_qvalue; Type: TABLE DATA; Schema: public; Owner: luigi_local_user
 --
@@ -15300,36 +15254,6 @@ COPY public.tictactoe_qvalue (id, state, action, q_value) FROM stdin;
 --
 
 SELECT pg_catalog.setval('public.tictactoe_qvalue_id_seq', 48608, true);
-
-
---
--- Name: tictactoe_qvalue tictactoe_qvalue_pkey; Type: CONSTRAINT; Schema: public; Owner: luigi_local_user
---
-
-ALTER TABLE ONLY public.tictactoe_qvalue
-    ADD CONSTRAINT tictactoe_qvalue_pkey PRIMARY KEY (id);
-
-
---
--- Name: tictactoe_qvalue tictactoe_qvalue_state_action_90797002_uniq; Type: CONSTRAINT; Schema: public; Owner: luigi_local_user
---
-
-ALTER TABLE ONLY public.tictactoe_qvalue
-    ADD CONSTRAINT tictactoe_qvalue_state_action_90797002_uniq UNIQUE (state, action);
-
-
---
--- Name: tictactoe_qvalue_state_deec6a8e; Type: INDEX; Schema: public; Owner: luigi_local_user
---
-
-CREATE INDEX tictactoe_qvalue_state_deec6a8e ON public.tictactoe_qvalue USING btree (state);
-
-
---
--- Name: tictactoe_qvalue_state_deec6a8e_like; Type: INDEX; Schema: public; Owner: luigi_local_user
---
-
-CREATE INDEX tictactoe_qvalue_state_deec6a8e_like ON public.tictactoe_qvalue USING btree (state varchar_pattern_ops);
 
 
 --
