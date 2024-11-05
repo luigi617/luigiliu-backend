@@ -191,6 +191,7 @@ if not DEBUG:
 
 CORS_ALLOWED_ORIGINS = [
     'https://www.luigiliu.com',
+    'https://luigiliu.com',
     'http://localhost:5173',
 ]
 
