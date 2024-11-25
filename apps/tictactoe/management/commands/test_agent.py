@@ -8,8 +8,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Instantiate players
-        agent = Agent("Agent")
-        opp = Agent("Opp")
+        agent = Agent("Agent", exp_rate=0)
+        opp = Agent("Opp", exp_rate=0)
 
         # Start the game
         test_instance = TicTacToe(agent, opp)
@@ -17,7 +17,7 @@ class Command(BaseCommand):
         # Testing the agent
         agent.exp_rate = 0  # Turn off exploration during testing
         self.stdout.write("\nTesting the agent against a random player...")
-        wins, losses, draws, episodes = test_instance.test(rounds=1000)
+        wins, losses, draws, episodes = test_instance.test(rounds=10000)
 
 
         self.stdout.write(self.style.SUCCESS('Training completed successfully'))
