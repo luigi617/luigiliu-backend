@@ -9,7 +9,6 @@ set -o nounset
 # N.B. If only .env files supported variable expansion...
 
 
-
 postgres_ready() {
 python << END
 import sys
