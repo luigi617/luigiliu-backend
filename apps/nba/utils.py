@@ -10,6 +10,8 @@ import pytz
 from django.utils.timezone import make_aware, is_naive
 import json
 
+from apps.nba.proxy_management import call_function_with_proxy
+
 eastern = pytz.timezone('US/Eastern')
 
 
@@ -115,7 +117,10 @@ def get_first_1_day_of_past_given_date_games(date):
     for day_delta in range(1, 8):
         current_date = date + timedelta(days=-day_delta)
         game_date_str = current_date.strftime('%m/%d/%Y')
-        score_board = ScoreboardV2(game_date=game_date_str, league_id='00', day_offset=0)
+        score_board = call_function_with_proxy(
+            lambda proxy: ScoreboardV2(game_date=game_date_str, league_id='00', day_offset=0, proxy=proxy, timeout=5)
+        )
+        if not score_board: return [], current_date
         data = score_board.get_normalized_dict()
         return process_scoreboard_game(data), current_date
     
@@ -123,18 +128,22 @@ def get_first_1_day_of_future_given_date_games(date):
     for day_delta in range(1, 8):
         current_date = date + timedelta(days=day_delta)
         game_date_str = current_date.strftime('%m/%d/%Y')
-        score_board = ScoreboardV2(game_date=game_date_str, league_id='00', day_offset=0)
-
+        score_board = call_function_with_proxy(
+            lambda proxy: ScoreboardV2(game_date=game_date_str, league_id='00', day_offset=0, proxy=proxy, timeout=5)
+        )
+        if not score_board: return [], current_date
         data = score_board.get_normalized_dict()
         return process_scoreboard_game(data), current_date
 
 def get_today_games():
 
     current_date = utc_to_et(datetime.today())
-
-        
     game_date_str = current_date.strftime('%m/%d/%Y')
-    score_board = ScoreboardV2(game_date=game_date_str, league_id='00', day_offset=0)
+
+    score_board = call_function_with_proxy(
+            lambda proxy: ScoreboardV2(game_date=game_date_str, league_id='00', day_offset=0, proxy=proxy, timeout=5)
+        )
+    if not score_board: return []
 
     data = score_board.get_normalized_dict()
     data = process_scoreboard_game(data)
@@ -210,13 +219,19 @@ def get_current_season() -> str:
     return f"{season_start}-{season_end_yy}"
 
 def get_current_standing():
-
-    standings_endpoint = leaguestandings.LeagueStandings(
-        league_id='00',
-        season=get_current_season(),
-        season_type='Regular Season'  
-    )
-
+    standings_endpoint = call_function_with_proxy(
+            lambda proxy: leaguestandings.LeagueStandings(
+                league_id='00',
+                season=get_current_season(),
+                season_type='Regular Season',
+                proxy=proxy,
+                timeout=5
+            )
+        )
+    
+    if not standings_endpoint:
+        return {}
+    
     team_info = get_team_information()
 
     teams = []

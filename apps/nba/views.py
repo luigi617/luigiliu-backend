@@ -7,6 +7,7 @@ from apps.nba.utils import (get_first_1_day_of_past_given_date_games,
                             get_current_standing,
                             utc_to_et,
                             et_to_utc)
+from apps.nba.proxy_management import valid_proxies
 from apps.restful_config.SSE_render import SSERenderer
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -80,6 +81,10 @@ class GetStanding(APIView):
     def get(self, request):
         standing = get_current_standing()
         return Response(standing)
+    
+class TEST(APIView):
+    def get(self, request):
+        return Response(valid_proxies)
     
 
 class LiveGameInformationSSE(APIView):
