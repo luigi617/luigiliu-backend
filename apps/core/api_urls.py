@@ -8,6 +8,6 @@ from rest_framework.urlpatterns import format_suffix_patterns
 urlpatterns = format_suffix_patterns(
     core_urlpatterns + 
     users_urlpatterns +
-    tictactoe_urlpatterns + 
-    nba_urlpatterns
+    tictactoe_urlpatterns
+    # nba_urlpatterns
 )
