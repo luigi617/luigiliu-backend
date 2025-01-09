@@ -151,7 +151,6 @@ def get_live_games():
     team_info = get_team_information()
     games = {}
     for game in data["scoreboard"]["games"]:
-        print(game)
         game_info = {}
         game_info["game_id"] = game["gameId"]
         game_info["is_future_game"] = game["gameStatus"] == 1
