@@ -30,6 +30,7 @@ LOCAL_APPS = [
     "apps.core.apps.CoreConfig",
     "apps.user.apps.UserConfig",
     "apps.tictactoe.apps.TictactoeConfig",
+    "apps.nba.apps.NbaConfig",
 ]
 THIRD_PARTY_APPS = [
     "phonenumber_field",

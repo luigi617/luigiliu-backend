@@ -18,3 +18,6 @@ numpy==1.23.0
 pandas==1.5.3
 
 redis==5.0.7
+
+nba_api==1.6.1
+requests==2.32.3
