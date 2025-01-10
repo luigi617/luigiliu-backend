@@ -41,75 +41,6 @@ def get_team_information():
         }
     return team_info
 
-def process_scoreboard_game(data):
-    '''
-    process the data:
-    scoreboard = ScoreboardV2(game_date=game_date_str, league_id='00', day_offset=0)
-    data = scoreboard.get_normalized_dict()
-    '''
-    games = {}
-
-    standing = {}
-    for s in data["EastConfStandingsByDay"] + data["WestConfStandingsByDay"]:
-        wins = s["W"]
-        losses = s["L"]
-        standing[s["TEAM_ID"]] = f"{wins}-{losses}"
-    
-    team_info = get_team_information()
-
-    for game_header in data["GameHeader"]:
-        game_id = game_header["GAME_ID"]
-        home_team_id = game_header["HOME_TEAM_ID"]
-        away_team_id = game_header["VISITOR_TEAM_ID"]
-        game_date = game_header["GAME_DATE_EST"]
-        parsed_game_date = datetime.strptime(game_date, "%Y-%m-%dT%H:%M:%S")
-        formatted_game_date = parsed_game_date.strftime("%d/%m/%Y")
-        game_status = game_header["GAME_STATUS_TEXT"]
-        is_future_game = game_header["GAME_STATUS_ID"] == 1
-        games[game_id] = games.get(game_id, {})
-        games[game_id]["home_team_id"] = home_team_id
-        games[game_id]["away_team_id"] = away_team_id
-        games[game_id]["game_date"] = formatted_game_date
-        games[game_id]["game_status"] = game_status
-        games[game_id]["is_future_game"] = is_future_game
-    
-    for linescore in data["LineScore"]:
-        game_id = linescore["GAME_ID"]
-        is_game_ended = games[game_id]["game_status"] == "Final"
-        team_id = linescore["TEAM_ID"]
-        team_name = linescore["TEAM_NAME"]
-        team_name = linescore["TEAM_NAME"]
-        # team_wins_losses = linescore["TEAM_WINS_LOSSES"]
-        team_wins_losses = standing[team_id] if is_game_ended else None
-        qtr_points = []
-        for qtr in [f"PTS_QTR{i}" for i in range(1, 5)] + [f"PTS_OT{i}" for i in range(1, 11)]:
-            if linescore[qtr] is None or linescore[qtr] == 0: break
-            qtr_points.append(linescore[qtr])
-        point = linescore["PTS"]
-        home_or_away = "home_team_info" if team_id == games[game_id]["home_team_id"] else "away_team_info"
-        games[game_id][home_or_away] = {}
-        games[game_id][home_or_away]["team_id"] = team_id
-        games[game_id][home_or_away]["team_full_name"] = team_info[team_id]["full_name"]
-        games[game_id][home_or_away]["team_abbr_name"] = team_info[team_id]["abbreviation"]
-        games[game_id][home_or_away]["logo"] = team_info[team_id]['logo']
-        games[game_id][home_or_away]["team_name"] = team_name
-        games[game_id][home_or_away]["team_wins_losses"] = team_wins_losses
-        games[game_id][home_or_away]["qtr_points"] = qtr_points
-        games[game_id][home_or_away]["point"] = point
-    
-    result = []
-    for game_id, game_info in games.items():
-        game_data = {
-            "game_id": game_id,
-            "game_date": game_info["game_date"],
-            "game_status": game_info["game_status"],
-            "is_future_game": game_info["is_future_game"],
-            "home_team_info": game_info["home_team_info"],
-            "away_team_info": game_info["away_team_info"],
-        }
-        result.append(game_data)
-
-    return result
 
 def process_game_information(raw_games):
     games = []
@@ -143,8 +74,6 @@ def process_game_information(raw_games):
         games.append(game_info)
     return games
         
-
-        
 def get_all_games_given_date(date):
     if not date:
         raise Exception("date must be given")
@@ -166,44 +95,18 @@ def get_first_1_day_of_past_given_date_games(date):
     for day_delta in range(1, 8):
         current_date = date + timedelta(days=-day_delta)
         return get_all_games_given_date(current_date), current_date
-        game_date_str = current_date.strftime('%m/%d/%Y')
-        score_board = call_function_with_proxy(
-            lambda proxy: ScoreboardV2(game_date=game_date_str, league_id='00', day_offset=0, proxy=proxy, timeout=5)
-        )
-        if not score_board: return [], current_date
-        data = score_board.get_normalized_dict()
-        return process_scoreboard_game(data), current_date
     
 def get_first_1_day_of_future_given_date_games(date):
     for day_delta in range(1, 8):
         current_date = date + timedelta(days=day_delta)
         return get_all_games_given_date(current_date), current_date
-        game_date_str = current_date.strftime('%m/%d/%Y')
-        score_board = call_function_with_proxy(
-            lambda proxy: ScoreboardV2(game_date=game_date_str, league_id='00', day_offset=0, proxy=proxy, timeout=5)
-        )
-        if not score_board: return [], current_date
-        data = score_board.get_normalized_dict()
-        return process_scoreboard_game(data), current_date
+      
 
 def get_today_games():
 
     current_date = utc_to_et(datetime.today())
     return get_all_games_given_date(current_date), current_date
-    game_date_str = current_date.strftime('%m/%d/%Y')
-
-    score_board = call_function_with_proxy(
-            lambda proxy: ScoreboardV2(game_date=game_date_str, league_id='00', day_offset=0, proxy=proxy, timeout=5)
-        )
-    if not score_board: return []
-
-    data = score_board.get_normalized_dict()
-    data = process_scoreboard_game(data)
-    live_games = get_live_games()
-    for i in range(len(data)):
-        if data[i]["game_id"] in live_games:
-            data[i] = live_games[data[i]["game_id"]]
-    return data
+    
 
 def get_live_games():
     score_board = scoreboard.ScoreBoard()
