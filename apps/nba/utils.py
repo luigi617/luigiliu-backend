@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from nba_api.live.nba.endpoints import scoreboard
 from nba_api.stats.endpoints import ScoreboardV2
 from nba_api.stats.endpoints import leaguestandings
@@ -36,6 +37,7 @@ def get_team_information():
         logo = static(f"assets/svg/nba_team_logo/{logo_filename}.svg")
         team_info[team["id"]] = {
             "full_name": team["full_name"],
+            "name": team["nickname"],
             "abbreviation": team["abbreviation"],
             "logo": logo
         }
@@ -105,7 +107,12 @@ def get_first_1_day_of_future_given_date_games(date):
 def get_today_games():
 
     current_date = utc_to_et(datetime.today())
-    return get_all_games_given_date(current_date), current_date
+    games = get_all_games_given_date(current_date)
+    live_games = get_live_games()
+    for i in range(len(games)):
+        if games[i]["game_id"] in live_games:
+            games[i] = live_games[games[i]["game_id"]]
+    return games, current_date
     
 
 def get_live_games():
@@ -174,6 +181,7 @@ def get_current_season() -> str:
     return f"{season_start}-{season_end_yy}"
 
 def get_current_standing():
+
     standings_endpoint = call_function_with_proxy(
             lambda proxy: leaguestandings.LeagueStandings(
                 league_id='00',
@@ -217,3 +225,97 @@ def get_current_standing():
         standings[conference].append(team_standing)
     return standings
 
+def fetch_nba_standings():
+    
+    url = 'https://www.espn.com/nba/standings'
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' \
+                      'AppleWebKit/537.36 (KHTML, like Gecko) ' \
+                      'Chrome/58.0.3029.110 Safari/537.3'
+    }
+    response = requests.get(url, headers=headers)
+
+    if response.status_code != 200:
+        raise Exception(f"Failed to load page {url}")
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    standings = {}
+
+    team_info = get_team_information()
+    new_team_info = {}
+    for team_id, team in team_info.items():
+        t = team.copy()
+        t["team_id"] = team_id
+        new_team_info[t["abbreviation"]] = t
+
+    table_titles = soup.find_all('div', class_='Table__Title')
+    for title_div in table_titles:
+        conference_full_name = title_div.get_text(strip=True)
+        conf = "east" if conference_full_name == "Eastern Conference" else "west"
+        standings[conf] = standings.get(conf, [])
+
+        standings_div = title_div.find_next_sibling('div')
+        
+        if not standings_div:
+            continue
+        tables = standings_div.find_all('table')
+        if not tables:
+            continue
+        conf_info = []
+        team_name_info = []
+        for i, table in enumerate(tables):
+
+            headers = [th.get_text(strip=True) for th in table.find('thead').find_all('th')]
+            header_indices = {header: idx for idx, header in enumerate(headers)}
+        
+            rows = table.find('tbody').find_all('tr')
+            table_info = []
+            for row in rows:
+                cols = row.find_all('td')
+                if not cols or len(cols) < len(header_indices):
+                    continue  # Skip incomplete rows
+                team_info = {}
+                for header, td in zip(headers, cols):
+                    if i == 0:
+                        value = td.find('span', class_='show-mobile').get_text(strip=True)
+                    else:
+                        value = td.get_text(strip=True)
+
+                    team_info[header] = value
+                table_info.append(team_info)
+            if i == 0:
+                for info in table_info:
+                    for _, team_name in info.items():
+                        team_name_info.append({"team_abbreviation": team_name})
+            else:
+                for team_name, stat in zip(team_name_info, table_info):
+                    conf_info.append({**team_name, **stat})
+        for rank, team in enumerate(conf_info):
+            team_standing = {}
+
+            team_abbreviation = team["team_abbreviation"]
+            correct_abbreviation = {
+                "NY": "NYK",
+                "WSH": "WAS",
+                "GS": "GSW",
+                "SA": "SAS",
+                "UTAH": "UTA",
+                "NO": "NOP",
+            }
+            if team_abbreviation in correct_abbreviation:
+                team_abbreviation = correct_abbreviation[team_abbreviation]
+            
+            team_standing["team_id"] = new_team_info[team_abbreviation]["team_id"]
+            team_standing["team_name"] = new_team_info[team_abbreviation]["name"]
+            team_standing["team_logo"] = new_team_info[team_abbreviation]["logo"]
+            team_standing["rank"] = rank + 1
+            team_standing["pct"] = team["PCT"]
+            team_standing["wins"] = team["W"]
+            team_standing["losses"] = team["L"]
+            team_standing["home"] = team["HOME"]
+            team_standing["away"] = team["AWAY"]
+            team_standing["ll10"] = team["L10"]
+            
+            standings[conf].append(team_standing)
+        
+    return standings

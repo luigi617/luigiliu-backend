@@ -5,6 +5,7 @@ from apps.nba.utils import (get_first_1_day_of_past_given_date_games,
                             get_today_games,
                             get_live_games,
                             get_current_standing,
+                            fetch_nba_standings,
                             utc_to_et,
                             et_to_utc)
 from apps.nba.proxy_management import valid_proxies
@@ -79,7 +80,7 @@ class GetGameList(APIView):
     
 class GetStanding(APIView):
     def get(self, request):
-        standing = get_current_standing()
+        standing = fetch_nba_standings()
         return Response(standing)
     
 class TEST(APIView):

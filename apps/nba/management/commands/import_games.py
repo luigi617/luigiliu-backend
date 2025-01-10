@@ -12,7 +12,6 @@ class Command(BaseCommand):
     help = 'Import Team'
 
     def handle(self, *args, **options):
-        a = get_all_games_given_date(datetime.today())
-        print(a)
+        a = fetch_nba_standings()
         
         self.stdout.write(self.style.SUCCESS('Training completed successfully'))
