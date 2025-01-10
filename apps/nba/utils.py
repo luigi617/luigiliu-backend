@@ -51,18 +51,19 @@ def process_game_information(raw_games):
 
         game_date = game_data["gameDateTimeUTC"]
         parsed_game_date = datetime.strptime(game_date, "%Y-%m-%dT%H:%M:%SZ")
-        formatted_game_date = parsed_game_date.strftime("%d/%m/%Y")
-
+        utc_game_date = make_aware(parsed_game_date, pytz.utc)
         game_info = {
             "game_id": game_data["gameId"],
-            "game_date": formatted_game_date,
-            "game_status": game_data["gameStatusText"],
-            "is_future_game": game_data["gameStatus"] == 1,
+            "game_date": utc_game_date,
+            "game_status": game_data["gameStatus"],
         }
-
+        has_non_recognizable_team = False
         for key, home_or_away in zip(["home_team_info", "away_team_info"], ["homeTeam", "awayTeam"]):
             game_info[key] = {}
             team_id = game_data[home_or_away]["teamId"]
+            if team_id not in team_info:
+                has_non_recognizable_team = True
+                break
             game_info[key]["team_id"] = team_id
             game_info[key]["team_full_name"] = team_info[team_id]["full_name"]
             game_info[key]["team_abbr_name"] = team_info[team_id]["abbreviation"]
@@ -73,9 +74,20 @@ def process_game_information(raw_games):
             game_info[key]["team_wins_losses"] = f"{wins}-{losses}"
             game_info[key]["qtr_points"] = []
             game_info[key]["point"] = game_data[home_or_away]["score"]
+        if has_non_recognizable_team: continue
         games.append(game_info)
     return games
         
+def get_all_games():
+    response = requests.get(all_games_api)
+    if response.status_code != 200:
+        return []
+    data = response.json()
+    games = []
+    for games_by_date in data["leagueSchedule"]["gameDates"]:
+        games.extend(process_game_information(games_by_date["games"]))
+    return games
+
 def get_all_games_given_date(date):
     if not date:
         raise Exception("date must be given")
@@ -239,7 +251,7 @@ def fetch_nba_standings():
         raise Exception(f"Failed to load page {url}")
 
     soup = BeautifulSoup(response.text, 'html.parser')
-    standings = {}
+    standings = []
 
     team_info = get_team_information()
     new_team_info = {}
@@ -252,7 +264,6 @@ def fetch_nba_standings():
     for title_div in table_titles:
         conference_full_name = title_div.get_text(strip=True)
         conf = "east" if conference_full_name == "Eastern Conference" else "west"
-        standings[conf] = standings.get(conf, [])
 
         standings_div = title_div.find_next_sibling('div')
         
@@ -315,7 +326,8 @@ def fetch_nba_standings():
             team_standing["home"] = team["HOME"]
             team_standing["away"] = team["AWAY"]
             team_standing["ll10"] = team["L10"]
+            team_standing["conference"] = conf
             
-            standings[conf].append(team_standing)
+            standings.append(team_standing)
         
     return standings

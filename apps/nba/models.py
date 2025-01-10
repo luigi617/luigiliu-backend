@@ -27,10 +27,8 @@ class GameStatus(models.TextChoices):
     INPROGRESS = 'In Progress', 'In Progress'
 
 class Game(models.Model):
-
-
     game_id = models.CharField(max_length=20, primary_key=True)
-    game_date = models.DateField()
+    game_date = models.DateTimeField()
     game_status = models.CharField(max_length=15, choices=GameStatus.choices)
 
     # Home Team Information
@@ -41,11 +39,6 @@ class Game(models.Model):
     )
     home_team_wins_losses = models.CharField(max_length=10)
 
-    home_qtr_points = ArrayField(
-        models.PositiveIntegerField(),
-        help_text="Points scored by the home team in each of the quarters."
-    )
-
     home_total_points = models.PositiveIntegerField()
 
     # Away Team Information
@@ -55,13 +48,7 @@ class Game(models.Model):
         on_delete=models.CASCADE
     )
     away_team_wins_losses = models.CharField(max_length=10)
-    away_qtr_points = ArrayField(
-        models.PositiveIntegerField(),
-        help_text="Points scored by the away team in each of the quarters."
-    )
     away_total_points = models.PositiveIntegerField()
-
-    date_modified = models.DateTimeField(auto_now=True) # used to update games
 
     def __str__(self):
         return f"{self.home_team} vs {self.away_team} on {self.game_date}"

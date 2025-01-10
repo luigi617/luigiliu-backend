@@ -22,3 +22,5 @@ redis==5.0.7
 nba_api==1.6.1
 requests==2.32.3
 beautifulsoup4==4.12.3
+
+django-crontab==0.7.1

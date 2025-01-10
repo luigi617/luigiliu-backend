@@ -1,19 +1,20 @@
 # rl_agent/views.py
 
+from apps.nba.serializers import GameSerializer, StandingTeamSerializer
 from apps.nba.utils import (get_first_1_day_of_past_given_date_games,
                             get_first_1_day_of_future_given_date_games,
                             get_today_games,
                             get_live_games,
-                            get_current_standing,
-                            fetch_nba_standings,
-                            utc_to_et,
-                            et_to_utc)
+                            get_current_season,
+                            fetch_nba_standings)
 from apps.nba.proxy_management import valid_proxies
+from apps.nba.models import Game, StandingTeam, Conference
 from apps.restful_config.SSE_render import SSERenderer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
+from django.db.models import Max, Min
 from datetime import datetime
 import pytz
 from django.utils.timezone import make_aware
@@ -29,59 +30,62 @@ eastern = pytz.timezone('US/Eastern')
 class GetGameList(APIView):
     def get(self, request):
         date = request.GET.get("date")
-        timeline = request.GET.get("timeline", "today")
-        
-        if timeline not in ["past", "today", "future"]:
-            return Response({"error": "timeline must be either past, today, or future"},
+        try:
+            if date:
+                date = datetime.strptime(date, '%Y-%m-%d')
+            else: date = datetime.today()
+        except:
+            return Response({"error": "date must be in following format: yyyy-mm-dd"},
                             status=status.HTTP_400_BAD_REQUEST)
-        
-        if timeline == "today":
-            date = utc_to_et(datetime.today())
-        else:
-            try:
-                date = utc_to_et(datetime.strptime(date, '%Y-%m-%d'))
-            except:
-                return Response({"error": "date must be in following format: yyyy-mm-dd"},
-                                status=status.HTTP_400_BAD_REQUEST)
-        
+
+
         query_params = request.GET.copy()
-        if timeline == "today":
-            games, new_date = get_today_games()
-            new_date = et_to_utc(new_date)
-            query_params['date'] = new_date.strftime("%Y-%m-%d")
-            
-            query_params['timeline'] = 'past'
+
+        games = Game.objects.select_related('home_team', 'away_team') \
+            .filter(game_date__date=date.date()).order_by("game_date")
+        
+        prev_game_datetime = Game.objects\
+                .filter(game_date__date__lt=date.date())\
+                .aggregate(Max('game_date'))['game_date__max']
+        next_game_datetime = Game.objects\
+                .filter(game_date__date__gt=date.date())\
+                .aggregate(Min('game_date'))['game_date__min']
+        
+        prev_link = None
+        if prev_game_datetime:
+            query_params['date'] = prev_game_datetime.strftime("%Y-%m-%d")
             prev_link = request.build_absolute_uri(f"{request.path}?{urlencode(query_params)}")
-            
-            query_params['timeline'] = 'future'
+        next_link = None
+        if next_game_datetime:
+            query_params['date'] = next_game_datetime.strftime("%Y-%m-%d")
             next_link = request.build_absolute_uri(f"{request.path}?{urlencode(query_params)}")
         
-        elif timeline == "past":
-            games, new_date = get_first_1_day_of_past_given_date_games(date)
-            new_date = et_to_utc(new_date)
-            query_params['date'] = new_date.strftime("%Y-%m-%d")
-            query_params['timeline'] = 'past'
-            prev_link = request.build_absolute_uri(f"{request.path}?{urlencode(query_params)}")
-            next_link = None
-        
-        else:  # timeline == "future"
-            games, new_date = get_first_1_day_of_future_given_date_games(date)
-            new_date = et_to_utc(new_date)
-            query_params['date'] = new_date.strftime("%Y-%m-%d")
-            query_params['timeline'] = 'future'
-            prev_link = None
-            next_link = request.build_absolute_uri(f"{request.path}?{urlencode(query_params)}")
-        
+        serializer = GameSerializer(games, many=True)
         return Response({
             "prev_link": prev_link,
             "next_link": next_link,
-            "data": games,
-        })
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
     
 class GetStanding(APIView):
     def get(self, request):
-        standing = fetch_nba_standings()
-        return Response(standing)
+        current_season = get_current_season()
+        
+        east_standings = StandingTeam.objects.\
+            filter(year=current_season, conference=Conference.EAST).order_by('rank')
+        west_standings = StandingTeam.objects \
+            .filter(year=current_season, conference=Conference.WEST).order_by('rank')
+
+        # Serialize the data
+        serializer_east = StandingTeamSerializer(east_standings, many=True)
+        serializer_west = StandingTeamSerializer(west_standings, many=True)
+
+        # Structure the response
+        response_data = {
+            'east': serializer_east.data,
+            'west': serializer_west.data
+        }
+        return Response(response_data)
     
 class TEST(APIView):
     def get(self, request):
@@ -97,7 +101,7 @@ class LiveGameInformationSSE(APIView):
             while True:
                 live_games = get_live_games()
                 yield f"data: {json.dumps(live_games)}\n\n"
-                time.sleep(10)
+                time.sleep(5)
 
         # Create and return a StreamingHttpResponse
         response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')

@@ -19,6 +19,6 @@ class Command(BaseCommand):
                 "abbrevation": team["abbreviation"],
                 "logo": logo
             }
-            team, created = Team.objects.update_or_create(id=team["id"], **data)
+            Team.objects.update_or_create(id=team["id"], defaults=data)
         
         self.stdout.write(self.style.SUCCESS('Training completed successfully'))

@@ -38,6 +38,7 @@ THIRD_PARTY_APPS = [
     "rest_framework_simplejwt",
     "imagekit",
     "corsheaders",
+    "django_crontab",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -197,3 +198,9 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS").split(" ")
+
+
+CRONJOBS = [
+    ('0 0 * * *', 'apps.nba.cron.import_games'),  # Runs daily at midnight
+    ('0 0 * * *', 'apps.nba.cron.import_standing'),  # Runs daily at midnight
+]
