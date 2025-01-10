@@ -5,15 +5,16 @@ from nba_api.stats.static import teams
 
 from django.templatetags.static import static
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import pytz
 from django.utils.timezone import make_aware, is_naive
 import json
+import requests
 
 from apps.nba.proxy_management import call_function_with_proxy
 
 eastern = pytz.timezone('US/Eastern')
-
+all_games_api = "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2.json"
 
 def utc_to_local(date):
     if is_naive(date):
@@ -110,12 +111,61 @@ def process_scoreboard_game(data):
 
     return result
 
+def process_game_information(raw_games):
+    games = []
+    team_info = get_team_information()
+    for game_data in raw_games:
+
+        game_date = game_data["gameDateTimeUTC"]
+        parsed_game_date = datetime.strptime(game_date, "%Y-%m-%dT%H:%M:%SZ")
+        formatted_game_date = parsed_game_date.strftime("%d/%m/%Y")
+
+        game_info = {
+            "game_id": game_data["gameId"],
+            "game_date": formatted_game_date,
+            "game_status": game_data["gameStatusText"],
+            "is_future_game": game_data["gameStatus"] == 1,
+        }
+
+        for key, home_or_away in zip(["home_team_info", "away_team_info"], ["homeTeam", "awayTeam"]):
+            game_info[key] = {}
+            team_id = game_data[home_or_away]["teamId"]
+            game_info[key]["team_id"] = team_id
+            game_info[key]["team_full_name"] = team_info[team_id]["full_name"]
+            game_info[key]["team_abbr_name"] = team_info[team_id]["abbreviation"]
+            game_info[key]["logo"] = team_info[team_id]['logo']
+            game_info[key]["team_name"] = game_data[home_or_away]["teamName"]
+            wins = game_data[home_or_away]["wins"]
+            losses = game_data[home_or_away]["losses"]
+            game_info[key]["team_wins_losses"] = f"{wins}-{losses}"
+            game_info[key]["qtr_points"] = []
+            game_info[key]["point"] = game_data[home_or_away]["score"]
+        games.append(game_info)
+    return games
         
 
-def get_first_1_day_of_past_given_date_games(date):
+        
+def get_all_games_given_date(date):
+    if not date:
+        raise Exception("date must be given")
+    if not isinstance(date, datetime):
+        raise Exception("date must be a datetime or date")
+    
+    response = requests.get(all_games_api)
+    if response.status_code != 200:
+        return []
+    data = response.json()
+    for games_by_date in data["leagueSchedule"]["gameDates"]:
+        game_date = datetime.strptime(games_by_date["gameDate"], "%m/%d/%Y %H:%M:%S")
+        if date.date() == game_date.date():
+            return process_game_information(games_by_date["games"])
+    return []
 
+def get_first_1_day_of_past_given_date_games(date):
+    
     for day_delta in range(1, 8):
         current_date = date + timedelta(days=-day_delta)
+        return get_all_games_given_date(current_date), current_date
         game_date_str = current_date.strftime('%m/%d/%Y')
         score_board = call_function_with_proxy(
             lambda proxy: ScoreboardV2(game_date=game_date_str, league_id='00', day_offset=0, proxy=proxy, timeout=5)
@@ -127,6 +177,7 @@ def get_first_1_day_of_past_given_date_games(date):
 def get_first_1_day_of_future_given_date_games(date):
     for day_delta in range(1, 8):
         current_date = date + timedelta(days=day_delta)
+        return get_all_games_given_date(current_date), current_date
         game_date_str = current_date.strftime('%m/%d/%Y')
         score_board = call_function_with_proxy(
             lambda proxy: ScoreboardV2(game_date=game_date_str, league_id='00', day_offset=0, proxy=proxy, timeout=5)
@@ -138,6 +189,8 @@ def get_first_1_day_of_future_given_date_games(date):
 def get_today_games():
 
     current_date = utc_to_et(datetime.today())
+    print(current_date)
+    return get_all_games_given_date(current_date), current_date
     game_date_str = current_date.strftime('%m/%d/%Y')
 
     score_board = call_function_with_proxy(
@@ -249,6 +302,7 @@ def get_current_standing():
         conference = team["Conference"].lower()
         standings[conference] = standings.get(conference, [])
         team_standing = {}
+        team_standing["team_id"] = team["TeamID"]
         team_standing["team_name"] = team["TeamName"]
         team_standing["team_logo"] = team_info[team["TeamID"]]["logo"]
         team_standing["rank"] = team["PlayoffRank"]
@@ -260,3 +314,4 @@ def get_current_standing():
         team_standing["ll10"] = team["L10"]
         standings[conference].append(team_standing)
     return standings
+
