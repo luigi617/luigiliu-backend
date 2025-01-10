@@ -45,8 +45,8 @@ class GetGameList(APIView):
         
         query_params = request.GET.copy()
         if timeline == "today":
-            games = get_today_games()
-            new_date = et_to_utc(date)
+            games, new_date = get_today_games()
+            new_date = et_to_utc(new_date)
             query_params['date'] = new_date.strftime("%Y-%m-%d")
             
             query_params['timeline'] = 'past'

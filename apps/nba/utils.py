@@ -189,7 +189,6 @@ def get_first_1_day_of_future_given_date_games(date):
 def get_today_games():
 
     current_date = utc_to_et(datetime.today())
-    print(current_date)
     return get_all_games_given_date(current_date), current_date
     game_date_str = current_date.strftime('%m/%d/%Y')
 
