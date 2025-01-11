@@ -15,13 +15,13 @@ class Command(BaseCommand):
         # Optional argument
         parser.add_argument(
             '--p1', 
-            type=int, 
+            type=float, 
             default=1, 
             help='Number of times to print the greeting'
         )
         parser.add_argument(
             '--p2', 
-            type=int, 
+            type=float, 
             default=1, 
             help='Number of times to print the greeting'
         )
