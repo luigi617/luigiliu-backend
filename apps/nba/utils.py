@@ -131,25 +131,24 @@ def get_live_games():
     score_board = scoreboard.ScoreBoard()
 
     data = score_board.get_dict()
-    team_info = get_team_information()
     games = {}
     for game in data["scoreboard"]["games"]:
         game_info = {}
         game_info["game_id"] = game["gameId"]
-        game_info["is_future_game"] = game["gameStatus"] == 1
+        # game_info["is_future_game"] = game["gameStatus"] == 1
         game_info["game_status"] = game["gameStatusText"]
-        game_date = game["gameTimeUTC"]
-        parsed_game_date = utc_to_et(datetime.strptime(game_date, "%Y-%m-%dT%H:%M:%SZ"))
-        formatted_game_date = parsed_game_date.strftime("%d/%m/%Y")
-        game_info["game_date"] = formatted_game_date
+        # game_date = game["gameTimeUTC"]
+        # parsed_game_date = utc_to_et(datetime.strptime(game_date, "%Y-%m-%dT%H:%M:%SZ"))
+        # formatted_game_date = parsed_game_date.strftime("%d/%m/%Y")
+        # game_info["game_date"] = formatted_game_date
 
         game_info["home_team_info"] = {}
         team_id = game["homeTeam"]["teamId"]
         game_info["home_team_info"]["team_id"] = team_id
-        game_info["home_team_info"]["team_full_name"] = team_info[team_id]["full_name"]
-        game_info["home_team_info"]["team_abbr_name"] = team_info[team_id]["abbreviation"]
-        game_info["home_team_info"]["logo"] = team_info[team_id]['logo']
-        game_info["home_team_info"]["team_name"] = game["homeTeam"]['teamName']
+        # game_info["home_team_info"]["team_full_name"] = team_info[team_id]["full_name"]
+        # game_info["home_team_info"]["team_abbr_name"] = team_info[team_id]["abbreviation"]
+        # game_info["home_team_info"]["logo"] = team_info[team_id]['logo']
+        # game_info["home_team_info"]["team_name"] = game["homeTeam"]['teamName']
         game_info["home_team_info"]["team_wins_losses"] = f"{game['homeTeam']['wins']}-{game['homeTeam']['losses']}"
         qtr_points = []
         for period in game['homeTeam']['periods']:
@@ -160,10 +159,10 @@ def get_live_games():
         game_info["away_team_info"] = {}
         team_id = game["awayTeam"]["teamId"]
         game_info["away_team_info"]["team_id"] = team_id
-        game_info["away_team_info"]["team_full_name"] = team_info[team_id]["full_name"]
-        game_info["away_team_info"]["team_abbr_name"] = team_info[team_id]["abbreviation"]
-        game_info["away_team_info"]["logo"] = team_info[team_id]['logo']
-        game_info["away_team_info"]["team_name"] = game["awayTeam"]['teamName']
+        # game_info["away_team_info"]["team_full_name"] = team_info[team_id]["full_name"]
+        # game_info["away_team_info"]["team_abbr_name"] = team_info[team_id]["abbreviation"]
+        # game_info["away_team_info"]["logo"] = team_info[team_id]['logo']
+        # game_info["away_team_info"]["team_name"] = game["awayTeam"]['teamName']
         game_info["away_team_info"]["team_wins_losses"] = f"{game['awayTeam']['wins']}-{game['awayTeam']['losses']}"
         qtr_points = []
         for period in game['awayTeam']['periods']:
