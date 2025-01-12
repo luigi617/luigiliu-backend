@@ -99,15 +99,30 @@ class TEST(APIView):
 class LiveGameInformationSSE(APIView):
     renderer_classes = [SSERenderer]
     
-    async def get(self, request):
+    def get(self, request):
         # Generator function for streaming data
-        async def event_stream():
+        async def async_event_stream():
             while True:
-                live_games = await sync_to_async(get_live_games())()
+                # Fetch live games data asynchronously
+                live_games = await sync_to_async(get_live_games)()
                 yield f"data: {json.dumps(live_games)}\n\n"
                 await asyncio.sleep(5)
 
+        # Convert async generator to a synchronous generator
+        def sync_event_stream():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            async_gen = async_event_stream()
+            
+            try:
+                while True:
+                    yield loop.run_until_complete(async_gen.__anext__())
+            except StopAsyncIteration:
+                pass
+            finally:
+                loop.close()
+
         # Create and return a StreamingHttpResponse
-        response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+        response = StreamingHttpResponse(sync_event_stream(), content_type='text/event-stream')
         response['Cache-Control'] = 'no-cache'
         return response
