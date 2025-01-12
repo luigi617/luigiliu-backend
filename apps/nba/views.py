@@ -23,6 +23,8 @@ from urllib.parse import urlencode
 from django.http import StreamingHttpResponse
 import time
 import json
+import asyncio
+from asgiref.sync import sync_to_async
 
 eastern = pytz.timezone('US/Eastern')
 
@@ -60,11 +62,13 @@ class GetGameList(APIView):
             query_params['date'] = next_game_datetime.strftime("%Y-%m-%d")
             next_link = request.build_absolute_uri(f"{request.path}?{urlencode(query_params)}")
         
-        serializer = GameSerializer(games, many=True)
+        live_games = get_live_games()
+        serializer = GameSerializer(games, many=True, context={'live_games': live_games})
+        data = serializer.data
         return Response({
             "prev_link": prev_link,
             "next_link": next_link,
-            "data": serializer.data
+            "data": data
         }, status=status.HTTP_200_OK)
     
 class GetStanding(APIView):
@@ -95,13 +99,13 @@ class TEST(APIView):
 class LiveGameInformationSSE(APIView):
     renderer_classes = [SSERenderer]
     
-    def get(self, request):
+    async def get(self, request):
         # Generator function for streaming data
-        def event_stream():
+        async def event_stream():
             while True:
-                live_games = get_live_games()
+                live_games = await sync_to_async(get_live_games())()
                 yield f"data: {json.dumps(live_games)}\n\n"
-                time.sleep(5)
+                await asyncio.sleep(5)
 
         # Create and return a StreamingHttpResponse
         response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')

@@ -73,6 +73,17 @@ class GameSerializer(serializers.ModelSerializer):
         ]
 
     def get_home_team_info(self, obj):
+        live_games = self.context.get('live_games', {})
+        game_id = obj.game_id
+        if game_id in live_games:
+            team_wins_losses = live_games[game_id]["home_team_info"]["team_wins_losses"]
+            qtr_points = live_games[game_id]["home_team_info"]["qtr_points"]
+            point = live_games[game_id]["home_team_info"]["point"]
+        else:
+            team_wins_losses = obj.home_team_wins_losses
+            qtr_points = []
+            point = obj.home_total_points
+
         team = obj.home_team
         return {
             "team_id": team.id,
@@ -80,12 +91,23 @@ class GameSerializer(serializers.ModelSerializer):
             "team_abbr_name": team.abbrevation,
             "logo": team.logo,
             "team_name": team.name,
-            "team_wins_losses": obj.home_team_wins_losses,
-            "qtr_points": [],
-            "point": obj.home_total_points
+            "team_wins_losses": team_wins_losses,
+            "qtr_points": qtr_points,
+            "point": point
         }
 
     def get_away_team_info(self, obj):
+        live_games = self.context.get('live_games', {})
+        game_id = obj.game_id
+        if game_id in live_games:
+            team_wins_losses = live_games[game_id]["away_team_info"]["team_wins_losses"]
+            qtr_points = live_games[game_id]["away_team_info"]["qtr_points"]
+            point = live_games[game_id]["away_team_info"]["point"]
+        else:
+            team_wins_losses = obj.away_team_wins_losses
+            qtr_points = []
+            point = obj.away_total_points
+
         team = obj.away_team
         return {
             "team_id": team.id,
@@ -93,9 +115,9 @@ class GameSerializer(serializers.ModelSerializer):
             "team_abbr_name": team.abbrevation,
             "logo": team.logo,
             "team_name": team.name,
-            "team_wins_losses": obj.away_team_wins_losses,
-            "qtr_points": [],
-            "point": obj.away_total_points
+            "team_wins_losses": team_wins_losses,
+            "qtr_points": qtr_points,
+            "point": point
         }
     def get_is_future_game(self, obj):
         return obj.game_status == GameStatus.SCHEDULED
