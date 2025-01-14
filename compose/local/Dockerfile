@@ -1,21 +1,19 @@
 # syntax=docker/dockerfile:1
 # pull official base image
-FROM python:3.9
+FROM python:3.11-slim
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 # set work directory
 WORKDIR /code
 
-# install psycopg2 dependencies
-# RUN apk update
-# RUN apk add postgresql-dev gcc python3-dev musl-dev
-RUN apt-get update \
-  # dependencies for building Python packages
-  && apt-get install -y build-essential \
-  # psycopg2 dependencies
-  && apt-get install -y libpq-dev \
-  && apt-get install -y poppler-utils
+
+
+RUN apt-get update && apt-get install -y \
+  build-essential \
+  libpq-dev \
+  poppler-utils \
+  && rm -rf /var/lib/apt/lists/*
 
 
 

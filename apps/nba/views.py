@@ -1,15 +1,10 @@
 # rl_agent/views.py
 
 from apps.nba.serializers import GameSerializer, StandingTeamSerializer
-from apps.nba.utils import (get_first_1_day_of_past_given_date_games,
-                            get_first_1_day_of_future_given_date_games,
-                            get_today_games,
-                            get_live_games,
-                            get_current_season,
-                            fetch_nba_standings)
+from apps.nba.utils import (get_live_games, get_current_season)
 from apps.nba.proxy_management import valid_proxies
 from apps.nba.models import Game, StandingTeam, Conference
-from apps.restful_config.SSE_render import SSERenderer
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -17,14 +12,7 @@ from rest_framework import status
 from django.db.models import Max, Min
 from datetime import datetime
 import pytz
-from django.utils.timezone import make_aware
 from urllib.parse import urlencode
-
-from django.http import StreamingHttpResponse
-import time
-import json
-import asyncio
-from asgiref.sync import sync_to_async
 
 eastern = pytz.timezone('US/Eastern')
 
@@ -97,32 +85,6 @@ class TEST(APIView):
     
 
 class LiveGameInformationSSE(APIView):
-    renderer_classes = [SSERenderer]
-    
     def get(self, request):
-        # Generator function for streaming data
-        async def async_event_stream():
-            while True:
-                # Fetch live games data asynchronously
-                live_games = await sync_to_async(get_live_games)()
-                yield f"data: {json.dumps(live_games)}\n\n"
-                await asyncio.sleep(5)
-
-        # Convert async generator to a synchronous generator
-        def sync_event_stream():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            async_gen = async_event_stream()
-            
-            try:
-                while True:
-                    yield loop.run_until_complete(async_gen.__anext__())
-            except StopAsyncIteration:
-                pass
-            finally:
-                loop.close()
-
-        # Create and return a StreamingHttpResponse
-        response = StreamingHttpResponse(sync_event_stream(), content_type='text/event-stream')
-        response['Cache-Control'] = 'no-cache'
-        return response
+        live_games = get_live_games()
+        return Response(live_games)

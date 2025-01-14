@@ -135,7 +135,7 @@ def get_live_games():
     for game in data["scoreboard"]["games"]:
         game_info = {}
         game_info["game_id"] = game["gameId"]
-        # game_info["is_future_game"] = game["gameStatus"] == 1
+        game_info["is_future_game"] = game["gameStatus"] == 1
         game_info["game_status"] = game["gameStatusText"]
         # game_date = game["gameTimeUTC"]
         # parsed_game_date = utc_to_et(datetime.strptime(game_date, "%Y-%m-%dT%H:%M:%SZ"))
