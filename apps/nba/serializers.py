@@ -58,7 +58,7 @@ class GameSerializer(serializers.ModelSerializer):
     home_team_info = serializers.SerializerMethodField()
     away_team_info = serializers.SerializerMethodField()
     is_future_game = serializers.SerializerMethodField()
-    game_status = serializers.CharField()
+    game_status = serializers.SerializerMethodField()
     game_date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S")
 
     class Meta:
@@ -120,4 +120,16 @@ class GameSerializer(serializers.ModelSerializer):
             "point": point
         }
     def get_is_future_game(self, obj):
-        return obj.game_status == GameStatus.SCHEDULED
+        status = obj.game_status
+        live_games = self.context.get('live_games', {})
+        game_id = obj.game_id
+        if game_id in live_games:
+            status = live_games[game_id]["game_status"]
+        return status == GameStatus.SCHEDULED
+    
+    def get_game_status(self, obj):
+        live_games = self.context.get('live_games', {})
+        game_id = obj.game_id
+        if game_id in live_games:
+            return live_games[game_id]["game_status"]
+        return obj.game_status
