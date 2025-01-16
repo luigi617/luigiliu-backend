@@ -201,6 +201,6 @@ CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS").split(" ")
 
 
 CRONJOBS = [
-    ('0 0 * * *', 'apps.nba.cron.import_games'),  # Runs daily at midnight
-    ('0 0 * * *', 'apps.nba.cron.import_standing'),  # Runs daily at midnight
+    ('0 */6 * * *', 'apps.nba.cron.import_games'),
+    ('0 */6 * * *', 'apps.nba.cron.import_standing'),
 ]
