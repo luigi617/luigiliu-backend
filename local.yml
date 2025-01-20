@@ -42,6 +42,7 @@ services:
     container_name: django_celery_worker
     command: celery -A config worker -l info
     depends_on:
+      - postgres
       - redis
     volumes:
       - .:/code
@@ -56,6 +57,7 @@ services:
     container_name: django_celery_beat
     command: celery -A config beat -l info
     depends_on:
+      - postgres
       - redis
     volumes:
       - .:/coe
