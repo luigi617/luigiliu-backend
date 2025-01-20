@@ -120,11 +120,11 @@ class GameSerializer(serializers.ModelSerializer):
             "point": point
         }
     def get_is_future_game(self, obj):
-        status = obj.game_status
         live_games = self.context.get('live_games', {})
         game_id = obj.game_id
         if game_id in live_games:
-            status = live_games[game_id]["game_status"]
+            return live_games[game_id]["is_future_game"]
+        status = obj.game_status
         return status == GameStatus.SCHEDULED
     
     def get_game_status(self, obj):
