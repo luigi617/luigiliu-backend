@@ -1,12 +1,12 @@
 # rl_agent/management/commands/train_agent.py
 
-from django.core.management.base import BaseCommand
+from celery import shared_task
 from apps.nba.utils import *
 from apps.nba.models import Team, Game, GameStatus, Conference, StandingTeam
 from django.db import transaction
 
 
-
+@shared_task
 def import_games():
     with transaction.atomic():
         games = get_all_games()
@@ -34,7 +34,7 @@ def import_games():
     
 
 
-
+@shared_task
 def import_standing():
     with transaction.atomic():
         standing_teams = fetch_nba_standings()

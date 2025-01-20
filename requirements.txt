@@ -20,9 +20,8 @@ numpy==1.26.4
 pandas==2.2.3
 
 redis==5.0.7
+celery==5.4.0
 
 nba_api==1.7
 requests==2.32.3
 beautifulsoup4==4.12.3
-
-django-crontab==0.7.1

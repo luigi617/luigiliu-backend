@@ -38,7 +38,6 @@ THIRD_PARTY_APPS = [
     "rest_framework_simplejwt",
     "imagekit",
     "corsheaders",
-    "django_crontab",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -200,7 +199,23 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS").split(" ")
 
 
-CRONJOBS = [
-    ('0 */6 * * *', 'apps.nba.cron.import_games'),
-    ('0 */6 * * *', 'apps.nba.cron.import_standing'),
-]
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+
+CELERY_TIMEZONE = 'UTC'
+CELERY_ENABLE_UTC = True
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'import_nba_standing': {
+        'task': 'apps.nba.tasks.import_standing',
+        'schedule': crontab(hour='*/4'),
+        'args': (),
+    },
+    'import_nba_games': {
+        'task': 'apps.nba.tasks.import_games',
+        'schedule': crontab(hour='*/4'),
+        'args': (),
+    },
+}

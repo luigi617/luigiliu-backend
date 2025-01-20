@@ -35,9 +35,6 @@ until postgres_ready; do
 done
 >&2 echo 'PostgreSQL is available'
 
-echo "Starting cron service..."
-service cron start
-
 python manage.py migrate
 
 exec "$@"
