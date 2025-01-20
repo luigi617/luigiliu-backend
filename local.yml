@@ -68,5 +68,4 @@ services:
 volumes: 
   local_postgres_data: {}
   local_postgres_data_backups: {}
-
   redis_data: {}
