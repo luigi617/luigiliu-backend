@@ -21,8 +21,6 @@ def get_available_text_page_ids():
     return text_page_available_ids
 
 
-
-
 class GetAllTextPageAPIView(APIView):
 
     def get(self, request):
