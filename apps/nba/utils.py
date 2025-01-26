@@ -11,6 +11,8 @@ import pytz
 from django.utils.timezone import make_aware, is_naive
 import json
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from apps.nba.proxy_management import call_function_with_proxy
 
@@ -79,7 +81,17 @@ def process_game_information(raw_games):
     return games
         
 def get_all_games():
-    response = requests.get(all_games_api)
+    session = requests.Session()
+    retries = Retry(total=5, backoff_factor=1, status_forcelist=[ 502, 503, 504 ])
+    adapter = HTTPAdapter(max_retries=retries)
+    session.mount('https://', adapter)
+    try:
+        response = requests.get(all_games_api)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+        return []
+    
     if response.status_code != 200:
         return []
     data = response.json()
@@ -244,7 +256,17 @@ def fetch_nba_standings():
                       'AppleWebKit/537.36 (KHTML, like Gecko) ' \
                       'Chrome/58.0.3029.110 Safari/537.3'
     }
-    response = requests.get(url, headers=headers)
+    session = requests.Session()
+    retries = Retry(total=5, backoff_factor=1, status_forcelist=[ 502, 503, 504 ])
+    adapter = HTTPAdapter(max_retries=retries)
+    session.mount('https://', adapter)
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+        return []
+    
 
     if response.status_code != 200:
         raise Exception(f"Failed to load page {url}")
