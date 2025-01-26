@@ -16,7 +16,7 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'import_nba_standing': {
         'task': 'apps.nba.tasks.import_standing',
-        'schedule': crontab(minute='*/5'),  # Every 4 hours
+        'schedule': crontab(hour='*/4'),  # Every 4 hours
         'args': (),
     },
     'import_nba_games': {
