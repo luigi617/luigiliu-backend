@@ -98,6 +98,9 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': 'redis://redis:6379/1',
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
 
@@ -201,21 +204,9 @@ CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS").split(" ")
 
 CELERY_BROKER_URL = 'redis://redis:6379/0'
 CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 
 CELERY_TIMEZONE = 'UTC'
 CELERY_ENABLE_UTC = True
-
-from celery.schedules import crontab
-
-CELERY_BEAT_SCHEDULE = {
-    'import_nba_standing': {
-        'task': 'apps.nba.tasks.import_standing',
-        'schedule': crontab(hour='*/4'),
-        'args': (),
-    },
-    'import_nba_games': {
-        'task': 'apps.nba.tasks.import_games',
-        'schedule': crontab(hour='*/4'),
-        'args': (),
-    },
-}
